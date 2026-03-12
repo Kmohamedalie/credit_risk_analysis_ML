@@ -119,7 +119,8 @@ else:
         # Feature Importance Chart
         weights = model.coef_[0]
         features = scaler.feature_names_in_
-        fig = go.Figure(go.Bar(x=weights, y=features, orientation='h', marker_color='#800000')) # Venetian Red
+        fig = go.Figure(go.Bar(x=weights, y=features, orientation='h')) # Venetian Red , marker_color='#800000'
         fig.update_layout(title="Feature Influence on Default Risk", template="plotly_white")
         st.plotly_chart(fig, use_container_width=True)
+
 
