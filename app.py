@@ -15,12 +15,10 @@ st.set_page_config(
 # --- CUSTOM STYLING (The "Professional" Look) ---
 st.markdown("""
     <style>
-    .main { background-color: #f8f9fa; }
-    .stMetric { background-color: #ffffff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .stMetric { padding: 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     div[data-testid="stExpander"] { border: none !important; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     .stTabs [data-baseweb="tab-list"] { gap: 10px; }
-    .stTabs [data-baseweb="tab"] { 
-        background-color: #ffffff; 
+    .stTabs [data-baseweb="tab"] {  
         border: 1px solid #ddd; 
         padding: 10px 20px; 
         border-radius: 5px 5px 0 0;
@@ -124,3 +122,4 @@ else:
         fig = go.Figure(go.Bar(x=weights, y=features, orientation='h', marker_color='#800000')) # Venetian Red
         fig.update_layout(title="Feature Influence on Default Risk", template="plotly_white")
         st.plotly_chart(fig, use_container_width=True)
+
