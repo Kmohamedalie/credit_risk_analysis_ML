@@ -112,15 +112,16 @@ else:
     with tab3:
         st.subheader("About the Project")
         st.info("""
-        Inspired by the **Data Science for Finance** course at **Ca' Foscari University of Venice**.
+        Inspired by the **Research Method in Accounting and Finance** course at **Ca' Foscari University of Venice**.
         This project utilizes a Linear SVM model [cite: 1] to classify credit risk based on six key financial metrics[cite: 1].
         """)
         
         # Feature Importance Chart
         weights = model.coef_[0]
         features = scaler.feature_names_in_
-        fig = go.Figure(go.Bar(x=weights, y=features, orientation='h')) # Venetian Red , marker_color='#800000'
+        fig = go.Figure(go.Bar(x=weights, y=features, orientation='h', marker_color=['#2ecc71' if w < 0 else '#e74c3c' for w in weights])) # Venetian Red , marker_color='#800000'
         fig.update_layout(title="Feature Influence on Default Risk", template="plotly_white")
         st.plotly_chart(fig, use_container_width=True)
+
 
 
