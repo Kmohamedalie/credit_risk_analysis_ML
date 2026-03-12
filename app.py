@@ -3,22 +3,37 @@ import pickle
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
+from PIL import Image
 
 # --- PAGE CONFIG ---
 st.set_page_config(
-    page_title="Loan Risk Analysis Portal",
-    page_icon="💰",
+    page_title="Ca' Foscari Loan Analytics",
+    page_icon="🏛️",
     layout="wide"
 )
+
+# --- CUSTOM STYLING (The "Professional" Look) ---
+st.markdown("""
+    <style>
+    .main { background-color: #f8f9fa; }
+    .stMetric { background-color: #ffffff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    div[data-testid="stExpander"] { border: none !important; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .stTabs [data-baseweb="tab-list"] { gap: 10px; }
+    .stTabs [data-baseweb="tab"] { 
+        background-color: #ffffff; 
+        border: 1px solid #ddd; 
+        padding: 10px 20px; 
+        border-radius: 5px 5px 0 0;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
 # --- LOAD ASSETS ---
 @st.cache_resource
 def load_assets():
     try:
-        # Loading the scaler 
         with open('scaler.pkl', 'rb') as f:
             scaler = pickle.load(f)
-        # Loading the tuned SVM model 
         with open('tuned_svm_model.pkl', 'rb') as f:
             model = pickle.load(f)
         return scaler, model
@@ -27,106 +42,85 @@ def load_assets():
 
 scaler, model = load_assets()
 
-# --- MAIN UI ---
-st.title("💰 VSM Professional Loan Default Risk Portal")
-st.markdown("Assess individual applicants or process batch files using your **Tuned SVM Model**.")
+# --- SIDEBAR ---
+with st.sidebar:
+    # Adding the Ca' Foscari logo / Course Image
+    try:
+        logo = Image.open('VSM.jpg')
+        st.image(logo, use_container_width=True)
+    except:
+        st.warning("VSM.jpg not found. Please upload to GitHub.")
+    
+    st.title("Model Specs")
+    st.caption("Data Science for Finance")
+    st.write(f"**Core Model:** SVM [cite: 1]")
+    st.write(f"**Kernel:** {model.kernel if model else 'Linear'} [cite: 1]")
+    st.write(f"**Features:** {len(scaler.feature_names_in_) if scaler else 0} [cite: 1]")
+    st.divider()
+    st.markdown("[Course Syllabus](https://www.unive.it/data/insegnamento/558646/programma)")
+
+# --- MAIN CONTENT ---
+st.title("💰 Loan Default Risk Portal")
+st.markdown("### Decision Support System for Financial Risk Assessment")
 
 if scaler is None or model is None:
-    st.error("⚠️ Required files (`scaler.pkl` or `tuned_svm_model.pkl`) not found in the root directory.")
+    st.error("⚠️ System Offline: Model files missing.")
 else:
-    # Sidebar Info
-    st.sidebar.header("Model Specifications")
-    st.sidebar.text(f"Model Type: SVM (SVC)") # 
-    st.sidebar.text(f"Kernel: Linear") # 
-    st.sidebar.text(f"Features: {len(scaler.feature_names_in_)}") # 
-    
-    # Navigation Tabs
-    tab1, tab2, tab3 = st.tabs(["📋 Single Applicant", "📁 Batch Upload", "📊 Model Insights"])
+    tab1, tab2, tab3 = st.tabs(["🎯 Single Applicant", "📂 Batch Processing", "📈 Insights & About"])
 
-    # --- TAB 1: SINGLE PREDICTION ---
     with tab1:
-        st.subheader("Individual Risk Assessment")
-        with st.form("single_form"):
-            col1, col2 = st.columns(2)
-            with col1:
-                age = st.number_input("Age", 18, 100, 35)
-                income = st.number_input("Annual Income ($)", 0, 1000000, 50000)
-                credit = st.slider("Credit Score", 300, 850, 650)
-            with col2:
-                job_yrs = st.number_input("Years at Job", 0, 50, 5)
-                loans = st.number_input("Existing Loans", 0, 20, 1)
-                dti = st.slider("DTI Ratio", 0.0, 1.0, 0.3)
-            
-            submitted = st.form_submit_button("Predict Default Risk", type="primary")
+        col_in, col_res = st.columns([1.5, 1])
+        
+        with col_in:
+            st.subheader("Input Parameters")
+            with st.container(border=True):
+                c1, c2 = st.columns(2)
+                age = c1.number_input("Age", 18, 100, 35)
+                income = c1.number_input("Annual Income ($)", 0, 1000000, 60000)
+                credit = c1.slider("Credit Score", 300, 850, 650)
+                
+                job_yrs = c2.number_input("Years at Job", 0, 50, 5)
+                loans = c2.number_input("Existing Loans", 0, 20, 1)
+                dti = c2.slider("DTI Ratio", 0.0, 1.0, 0.35)
 
-        if submitted:
-            # Create DataFrame with exact training feature names [cite: 1, 209]
+        with col_res:
+            st.subheader("Assessment")
             input_df = pd.DataFrame([[age, income, credit, job_yrs, loans, dti]], 
-                                    columns=['Age', 'Annual_Income', 'Credit_Score', 
-                                             'Years_at_Job', 'Existing_Loans', 'DTI_Ratio'])
+                                    columns=['Age', 'Annual_Income', 'Credit_Score', 'Years_at_Job', 'Existing_Loans', 'DTI_Ratio'])
             
-            scaled_data = scaler.transform(input_df) # 
-            prediction = model.predict(scaled_data)[0] # 
-            probability = model.predict_proba(scaled_data)[0][1] # 
+            scaled_data = scaler.transform(input_df)
+            prediction = model.predict(scaled_input)[0] if 'scaled_input' in locals() else model.predict(scaled_data)[0]
+            probability = model.predict_proba(scaled_data)[0][1]
 
-            st.divider()
-            c1, c2 = st.columns(2)
-            with c1:
-                if prediction == 1:
-                    st.error("### PREDICTION: DEFAULT")
-                else:
-                    st.success("### PREDICTION: NO DEFAULT")
-            with c2:
-                st.metric("Risk Probability", f"{probability:.2%}")
-                st.progress(probability)
-
-    # --- TAB 2: BATCH PROCESSING ---
-    with tab2:
-        st.subheader("Batch File Processing")
-        st.write("Upload a CSV file containing the required features.")
-        
-        uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
-        
-        if uploaded_file is not None:
-            data = pd.read_csv(uploaded_file)
-            # Ensure correct columns exist
-            required = ['Age', 'Annual_Income', 'Credit_Score', 'Years_at_Job', 'Existing_Loans', 'DTI_Ratio']
-            if all(col in data.columns for col in required):
-                # Scale and Predict
-                batch_scaled = scaler.transform(data[required])
-                preds = model.predict(batch_scaled)
-                probs = model.predict_proba(batch_scaled)[:, 1]
-                
-                # Append results
-                data['Prediction'] = np.where(preds == 1, 'Default', 'No Default')
-                data['Risk_Probability'] = probs
-                
-                st.write("### Analysis Results")
-                st.dataframe(data)
-                
-                # Download button
-                csv = data.to_csv(index=False).encode('utf-8')
-                st.download_button("Download Results as CSV", csv, "loan_results.csv", "text/csv")
+            if prediction == 1:
+                st.error("#### STATUS: HIGH RISK")
             else:
-                st.error(f"CSV must contain these columns: {required}")
+                st.success("#### STATUS: APPROVED")
+            
+            st.metric("Probability of Default", f"{probability:.2%}")
+            st.progress(probability)
 
-    # --- TAB 3: MODEL INSIGHTS ---
+    with tab2:
+        st.subheader("Batch Upload")
+        uploaded_file = st.file_uploader("Upload CSV Data", type="csv")
+        if uploaded_file:
+            df = pd.read_csv(uploaded_file)
+            # Scaling and prediction logic
+            batch_scaled = scaler.transform(df[['Age', 'Annual_Income', 'Credit_Score', 'Years_at_Job', 'Existing_Loans', 'DTI_Ratio']])
+            df['Risk Score'] = model.predict_proba(batch_scaled)[:, 1]
+            df['Decision'] = np.where(model.predict(batch_scaled) == 1, 'Deny', 'Approve')
+            st.dataframe(df, use_container_width=True)
+
     with tab3:
-        st.subheader("Feature Importance")
-        st.write("This chart represents the coefficients ($w$) of the Linear SVM.")
+        st.subheader("About the Project")
+        st.info("""
+        Inspired by the **RESEARCH METHODS IN ACCOUNTING AND FINANCE** taught by Prof. Silvia PANFILO
+        This project utilizes a Linear SVM model [cite: 1] to classify credit risk based on six key financial metrics[cite: 1].
+        """)
         
-        # Get feature names from scaler 
+        # Feature Importance Chart
+        weights = model.coef_[0]
         features = scaler.feature_names_in_
-        # Get coefficients from model 
-        importance = model.coef_[0]
-
-        fig = go.Figure(go.Bar(
-            x=importance,
-            y=features,
-            orientation='h',
-            marker_color=['#e74c3c' if x > 0 else '#2ecc71' for x in importance]
-        ))
-        
-        fig.update_layout(xaxis_title="Influence on Risk (Coefficient)", yaxis_title="Feature")
+        fig = go.Figure(go.Bar(x=weights, y=features, orientation='h', marker_color='#800000')) # Venetian Red
+        fig.update_layout(title="Feature Influence on Default Risk", template="plotly_white")
         st.plotly_chart(fig, use_container_width=True)
-
