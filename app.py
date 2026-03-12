@@ -56,7 +56,8 @@ with st.sidebar:
     st.write(f"**Features:** {len(scaler.feature_names_in_) if scaler else 0} [cite: 1]")
     st.divider()
     st.markdown("[Course Syllabus](https://www.unive.it/data/insegnamento/558646/programma)")
-    st.markdown("[Generate Synthetic loan data](https://colab.research.google.com/drive/1fmNamAKM2qlGlfv-PmlIVMZsSi8bD0Zg?usp=sharing)")
+    st.markdown("[Demo loan dataset](https://github.com/Kmohamedalie/synthetic_loan_dataset/blob/master/loan_data.csv)")
+    st.markdown("[Generate your own loan dataset](https://colab.research.google.com/drive/1fmNamAKM2qlGlfv-PmlIVMZsSi8bD0Zg?usp=sharing)")
 
 # --- MAIN CONTENT ---
 st.title("💰 Loan Default Risk Portal")
@@ -123,6 +124,7 @@ else:
         fig = go.Figure(go.Bar(x=weights, y=features, orientation='h', marker_color=['#2ecc71' if w < 0 else '#e74c3c' for w in weights])) # Venetian Red , marker_color='#800000'
         fig.update_layout(title="Feature Influence on Default Risk", template="plotly_white")
         st.plotly_chart(fig, use_container_width=True)
+
 
 
 
