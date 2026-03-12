@@ -28,7 +28,7 @@ def load_assets():
 scaler, model = load_assets()
 
 # --- MAIN UI ---
-st.title("💰 Professional Loan Default Risk Portal")
+st.title("💰 VSM Professional Loan Default Risk Portal")
 st.markdown("Assess individual applicants or process batch files using your **Tuned SVM Model**.")
 
 if scaler is None or model is None:
@@ -129,3 +129,4 @@ else:
         
         fig.update_layout(xaxis_title="Influence on Risk (Coefficient)", yaxis_title="Feature")
         st.plotly_chart(fig, use_container_width=True)
+
