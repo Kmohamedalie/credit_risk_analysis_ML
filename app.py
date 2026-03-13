@@ -50,7 +50,7 @@ with st.sidebar:
         st.warning("VSM.jpg not found. Please upload to GitHub.")
     
     st.title("Model Specs")
-    st.caption("Machine Learning for Finance")
+    st.caption("Machine Learning for Credit Risk")
     st.write(f"**Core Model:** SVM [cite: 1]")
     st.write(f"**Kernel:** {model.kernel if model else 'Linear'} [cite: 1]")
     st.write(f"**Features:** {len(scaler.feature_names_in_) if scaler else 0} [cite: 1]")
