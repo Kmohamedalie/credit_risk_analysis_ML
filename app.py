@@ -56,6 +56,7 @@ with st.sidebar:
     st.write(f"**Features:** {len(scaler.feature_names_in_) if scaler else 0} [cite: 1]")
     st.divider()
     st.markdown("[Course Syllabus](https://www.unive.it/data/insegnamento/558646/programma)")
+    st.markdown("[EDA-ML app](https://eda-ml.streamlit.app/)")
     st.markdown("[Demo loan dataset](https://github.com/Kmohamedalie/synthetic_loan_dataset/blob/master/loan_data.csv)")
     st.markdown("[Loan data generator app](https://loan-data-generator.streamlit.app/)")
     st.markdown("[Loan data generator Colab](https://colab.research.google.com/drive/1fmNamAKM2qlGlfv-PmlIVMZsSi8bD0Zg?usp=sharing)")
