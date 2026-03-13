@@ -19,7 +19,7 @@ sns.set_style("whitegrid") # Set style for plots
 
 # Set seed for reproducibility
 np.random.seed(42)
-n_customers = 3000
+n_customers = 20000
 
 """### **Create and engineering features:**"""
 
@@ -38,6 +38,8 @@ df = pd.DataFrame(data)
 
 df.head(5)
 
+print(f"The shape of the data is:", df.shape)
+
 # 2. Derive Logic-Based Features
 # Debt-to-Income ratio (simulated)
 df['DTI_Ratio'] = np.round(np.random.uniform(0.1, 0.6, size=n_customers), 2)
@@ -48,4 +50,4 @@ df_to_export = df.drop(columns=['Customer_ID'])
 # Export the DataFrame to a CSV file without the index
 df_to_export.to_csv('loan_data.csv', index=False)
 
-print("DataFrame exported to 'loan_data_no_customer_id.csv' successfully, excluding 'Customer_ID'.")
+print("DataFrame exported to 'loan_data.csv' successfully, excluding 'Customer_ID'.")
