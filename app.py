@@ -4,10 +4,8 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 from PIL import Image
-import shap
 from lime import lime_tabular
 import streamlit.components.v1 as components
-from streamlit_shap import st_shap
 
 # --- PAGE CONFIG ---
 st.set_page_config(
@@ -128,7 +126,7 @@ else:
         # Feature Importance Chart
         weights = model.coef_[0]
         features = scaler.feature_names_in_
-        fig = go.Figure(go.Bar(x=weights, y=features, orientation='h', marker_color=['#2ecc71' if w < 0 else '#e74c3c' for w in weights])) # Venetian Red , marker_color='#800000'
+        fig = go.Figure(go.Bar(x=weights, y=features, orientation='h', marker_color=['#2ecc71' if w < 0 else '#e74c3c' for w in weights]))
         fig.update_layout(title="Feature Influence on Default Risk", template="plotly_white")
         st.plotly_chart(fig, use_container_width=True)
 
@@ -139,8 +137,8 @@ else:
         if 'scaled_data' in locals():
             
             # --- LIME EXPLANATION ---
-            st.markdown("### 1. LIME (Local Interpretable Model-agnostic Explanations)")
-            st.caption("LIME builds a mini-model around this specific applicant to explain the probability score.")
+            st.markdown("### LIME (Local Interpretable Model-agnostic Explanations)")
+            st.caption("LIME builds a mini-model around this specific applicant to explain the probability score. It shows which features contributed most to the 'High Risk' or 'Approved' prediction.")
             
             # Dummy background using zeros (represents average since data is scaled)
             dummy_background_lime = np.zeros((100, len(scaler.feature_names_in_)))
@@ -158,40 +156,6 @@ else:
             
             # Render LIME as HTML in Streamlit
             components.html(exp.as_html(), height=350, scrolling=True)
-            
-            st.divider()
-            
-            # --- SHAP EXPLANATION ---
-            st.markdown("### 2. SHAP (SHapley Additive exPlanations)")
-            st.caption("SHAP breaks down how much each feature pushed the applicant's risk score higher (red) or lower (blue).")
-            
-            # 🟢 FIX: Use KernelExplainer for stable probability explanations
-            # We wrap the model to output just the probability of the "High Risk" class (class 1)
-            predict_fn_shap = lambda x: model.predict_proba(x)[:, 1]
-            
-            # A single row of zeros is enough for a scaled baseline and prevents cloud timeout 
-            shap_background = np.zeros((1, len(scaler.feature_names_in_)))
-            
-            explainer_shap = shap.KernelExplainer(predict_fn_shap, shap_background)
-            
-            # Get SHAP values for the single applicant
-            shap_values = explainer_shap.shap_values(scaled_data)
-            
-            # Safely extract expected value
-            expected_val = explainer_shap.expected_value
-            if isinstance(expected_val, (list, np.ndarray)):
-                expected_val = expected_val[0] 
-            
-            # Safely extract the SHAP values for the single instance
-            shap_val = shap_values[0] if isinstance(shap_values, list) else shap_values[0]
-            
-            # Render the interactive SHAP plot using st_shap
-            st_shap(shap.force_plot(
-                expected_val, 
-                shap_val, 
-                scaled_data[0], 
-                feature_names=scaler.feature_names_in_
-            ), height=200)
             
         else:
             st.info("👈 Please enter applicant details in the **Single Applicant** tab first to see explanations.")
