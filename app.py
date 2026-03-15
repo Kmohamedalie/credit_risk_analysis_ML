@@ -7,6 +7,7 @@ from PIL import Image
 import shap
 from lime import lime_tabular
 import streamlit.components.v1 as components
+from streamlit_shap import st_shap
 
 # --- PAGE CONFIG ---
 st.set_page_config(
@@ -95,7 +96,7 @@ else:
                                     columns=['Age', 'Annual_Income', 'Credit_Score', 'Years_at_Job', 'Existing_Loans', 'DTI_Ratio'])
             
             scaled_data = scaler.transform(input_df)
-            prediction = model.predict(scaled_input)[0] if 'scaled_input' in locals() else model.predict(scaled_data)[0]
+            prediction = model.predict(scaled_data)[0]
             probability = model.predict_proba(scaled_data)[0][1]
 
             if prediction == 1:
@@ -137,15 +138,15 @@ else:
         
         if 'scaled_data' in locals():
             
-            # Dummy background using zeros (represents average since data is scaled)
-            dummy_background = np.zeros((100, len(scaler.feature_names_in_)))
-            
             # --- LIME EXPLANATION ---
             st.markdown("### 1. LIME (Local Interpretable Model-agnostic Explanations)")
             st.caption("LIME builds a mini-model around this specific applicant to explain the probability score.")
             
+            # Dummy background using zeros (represents average since data is scaled)
+            dummy_background_lime = np.zeros((100, len(scaler.feature_names_in_)))
+            
             explainer_lime = lime_tabular.LimeTabularExplainer(
-                training_data=dummy_background,
+                training_data=dummy_background_lime,
                 feature_names=scaler.feature_names_in_,
                 class_names=['Approved', 'High Risk'],
                 mode='classification',
@@ -164,27 +165,33 @@ else:
             st.markdown("### 2. SHAP (SHapley Additive exPlanations)")
             st.caption("SHAP breaks down how much each feature pushed the applicant's risk score higher (red) or lower (blue).")
             
-            # Initialize SHAP LinearExplainer
-            explainer_shap = shap.LinearExplainer(model, dummy_background)
+            # 🟢 FIX: Use KernelExplainer for stable probability explanations
+            # We wrap the model to output just the probability of the "High Risk" class (class 1)
+            predict_fn_shap = lambda x: model.predict_proba(x)[:, 1]
+            
+            # A single row of zeros is enough for a scaled baseline and prevents cloud timeout 
+            shap_background = np.zeros((1, len(scaler.feature_names_in_)))
+            
+            explainer_shap = shap.KernelExplainer(predict_fn_shap, shap_background)
+            
+            # Get SHAP values for the single applicant
             shap_values = explainer_shap.shap_values(scaled_data)
             
+            # Safely extract expected value
             expected_val = explainer_shap.expected_value
             if isinstance(expected_val, (list, np.ndarray)):
                 expected_val = expected_val[0] 
-                
-            shap_val = shap_values[0] 
             
-            # Generate SHAP Force Plot via JavaScript
-            shap.initjs()
-            force_plot = shap.force_plot(
+            # Safely extract the SHAP values for the single instance
+            shap_val = shap_values[0] if isinstance(shap_values, list) else shap_values[0]
+            
+            # Render the interactive SHAP plot using st_shap
+            st_shap(shap.force_plot(
                 expected_val, 
                 shap_val, 
                 scaled_data[0], 
                 feature_names=scaler.feature_names_in_
-            )
-            
-            shap_html = f"<head>{shap.getjs()}</head><body>{force_plot.html()}</body>"
-            components.html(shap_html, height=200)
+            ), height=200)
             
         else:
             st.info("👈 Please enter applicant details in the **Single Applicant** tab first to see explanations.")
