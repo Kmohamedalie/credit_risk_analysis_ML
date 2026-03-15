@@ -4,4 +4,3 @@ numpy
 plotly
 Pillow
 scikit-learn
-lime
