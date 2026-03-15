@@ -6,3 +6,4 @@ Pillow
 scikit-learn
 shap
 lime
+streamlit-shap
