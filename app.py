@@ -4,6 +4,9 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 from PIL import Image
+import shap
+from lime import lime_tabular
+import streamlit.components.v1 as components
 
 # --- PAGE CONFIG ---
 st.set_page_config(
@@ -51,9 +54,9 @@ with st.sidebar:
     
     st.title("Model Specs")
     st.caption("Machine Learning for Credit Risk")
-    st.write(f"**Core Model:** SVM [cite: 1]")
-    st.write(f"**Kernel:** {model.kernel if model else 'Linear'} [cite: 1]")
-    st.write(f"**Features:** {len(scaler.feature_names_in_) if scaler else 0} [cite: 1]")
+    st.write(f"**Core Model:** SVM")
+    st.write(f"**Kernel:** {model.kernel if model else 'Linear'}")
+    st.write(f"**Features:** {len(scaler.feature_names_in_) if scaler else 0}")
     st.divider()
     st.markdown("[Course Syllabus](https://www.unive.it/data/insegnamento/558646/programma)")
     st.markdown("[EDA-ML app](https://eda-ml.streamlit.app/)")
@@ -68,7 +71,8 @@ st.markdown("### Decision Support System for Financial Risk Assessment")
 if scaler is None or model is None:
     st.error("⚠️ System Offline: Model files missing.")
 else:
-    tab1, tab2, tab3 = st.tabs(["🎯 Single Applicant", "📂 Batch Processing", "📈 Insights & About"])
+    # Added the 4th tab for XAI
+    tab1, tab2, tab3, tab4 = st.tabs(["🎯 Single Applicant", "📂 Batch Processing", "📈 Insights & About", "🧠 Explainable AI"])
 
     with tab1:
         col_in, col_res = st.columns([1.5, 1])
@@ -117,7 +121,7 @@ else:
         st.subheader("About the Project")
         st.info("""
         Inspired by the **Research Method in Accounting and Finance** course at **Ca' Foscari University of Venice**.
-        This project utilizes a Linear SVM model [cite: 1] to classify credit risk based on six key financial metrics[cite: 1].
+        This project utilizes a Linear SVM model to classify credit risk based on six key financial metrics.
         """)
         
         # Feature Importance Chart
@@ -127,9 +131,60 @@ else:
         fig.update_layout(title="Feature Influence on Default Risk", template="plotly_white")
         st.plotly_chart(fig, use_container_width=True)
 
-
-
-
-
-
-
+    with tab4:
+        st.subheader("Model Explainability (XAI)")
+        st.write("Understand the exact drivers behind the model's decision for the applicant currently in the **Single Applicant** tab.")
+        
+        if 'scaled_data' in locals():
+            
+            # Dummy background using zeros (represents average since data is scaled)
+            dummy_background = np.zeros((100, len(scaler.feature_names_in_)))
+            
+            # --- LIME EXPLANATION ---
+            st.markdown("### 1. LIME (Local Interpretable Model-agnostic Explanations)")
+            st.caption("LIME builds a mini-model around this specific applicant to explain the probability score.")
+            
+            explainer_lime = lime_tabular.LimeTabularExplainer(
+                training_data=dummy_background,
+                feature_names=scaler.feature_names_in_,
+                class_names=['Approved', 'High Risk'],
+                mode='classification',
+                discretize_continuous=False
+            )
+            
+            predict_fn = lambda x: model.predict_proba(x)
+            exp = explainer_lime.explain_instance(scaled_data[0], predict_fn, num_features=6)
+            
+            # Render LIME as HTML in Streamlit
+            components.html(exp.as_html(), height=350, scrolling=True)
+            
+            st.divider()
+            
+            # --- SHAP EXPLANATION ---
+            st.markdown("### 2. SHAP (SHapley Additive exPlanations)")
+            st.caption("SHAP breaks down how much each feature pushed the applicant's risk score higher (red) or lower (blue).")
+            
+            # Initialize SHAP LinearExplainer
+            explainer_shap = shap.LinearExplainer(model, dummy_background)
+            shap_values = explainer_shap.shap_values(scaled_data)
+            
+            expected_val = explainer_shap.expected_value
+            if isinstance(expected_val, (list, np.ndarray)):
+                expected_val = expected_val[0] 
+                
+            shap_val = shap_values[0] 
+            
+            # Generate SHAP Force Plot via JavaScript
+            shap.initjs()
+            force_plot = shap.force_plot(
+                expected_val, 
+                shap_val, 
+                scaled_data[0], 
+                feature_names=scaler.feature_names_in_
+            )
+            
+            shap_html = f"<head>{shap.getjs()}</head><body>{force_plot.html()}</body>"
+            components.html(shap_html, height=200)
+            
+        else:
+            st.info("👈 Please enter applicant details in the **Single Applicant** tab first to see explanations.")
