@@ -42,7 +42,6 @@ scaler, model = load_assets()
 
 # --- SIDEBAR ---
 with st.sidebar:
-    # Adding the Ca' Foscari logo / Course Image
     try:
         logo = Image.open('VSM.jpg')
         st.image(logo, use_container_width=True)
@@ -68,8 +67,8 @@ st.markdown("### Decision Support System for Financial Risk Assessment")
 if scaler is None or model is None:
     st.error("⚠️ System Offline: Model files missing.")
 else:
-    # Reverted back to the original 3 tabs
-    tab1, tab2, tab3 = st.tabs(["🎯 Single Applicant", "📂 Batch Processing", "📈 Insights & About"])
+    # We bring back Tab 4 for our fast, math-based XAI
+    tab1, tab2, tab3, tab4 = st.tabs(["🎯 Single Applicant", "📂 Batch Processing", "📈 Insights & About", "🧠 Individual Explanation"])
 
     with tab1:
         col_in, col_res = st.columns([1.5, 1])
@@ -108,7 +107,6 @@ else:
         uploaded_file = st.file_uploader("Upload CSV Data", type="csv")
         if uploaded_file:
             df = pd.read_csv(uploaded_file)
-            # Scaling and prediction logic
             batch_scaled = scaler.transform(df[['Age', 'Annual_Income', 'Credit_Score', 'Years_at_Job', 'Existing_Loans', 'DTI_Ratio']])
             df['Risk Score'] = model.predict_proba(batch_scaled)[:, 1]
             df['Decision'] = np.where(model.predict(batch_scaled) == 1, 'Deny', 'Approve')
@@ -121,9 +119,48 @@ else:
         This project utilizes a Linear SVM model to classify credit risk based on six key financial metrics.
         """)
         
-        # Feature Importance Chart
+        # Global Feature Importance Chart
         weights = model.coef_[0]
         features = scaler.feature_names_in_
         fig = go.Figure(go.Bar(x=weights, y=features, orientation='h', marker_color=['#2ecc71' if w < 0 else '#e74c3c' for w in weights]))
-        fig.update_layout(title="Feature Influence on Default Risk", template="plotly_white")
+        fig.update_layout(title="Global Feature Influence on Default Risk", template="plotly_white")
         st.plotly_chart(fig, use_container_width=True)
+
+    with tab4:
+        st.subheader("Why was this specific decision made?")
+        st.write("Because we use a linear model, we can calculate exactly how much each feature pushed this specific applicant toward 'Approved' or 'High Risk' in real-time.")
+        
+        if 'scaled_data' in locals():
+            # 🟢 FAST XAI: Multiply model weights by this applicant's scaled input values
+            weights = model.coef_[0]
+            applicant_values = scaled_data[0]
+            contributions = weights * applicant_values
+            
+            # Organize the data for charting
+            features = scaler.feature_names_in_
+            contrib_df = pd.DataFrame({'Feature': features, 'Contribution': contributions})
+            contrib_df['Abs_Contrib'] = contrib_df['Contribution'].abs()
+            contrib_df = contrib_df.sort_values(by='Abs_Contrib', ascending=True) # Sort for visual hierarchy
+            
+            # Plot the local explanation
+            fig_local = go.Figure(go.Bar(
+                x=contrib_df['Contribution'],
+                y=contrib_df['Feature'],
+                orientation='h',
+                marker_color=['#e74c3c' if c > 0 else '#2ecc71' for c in contrib_df['Contribution']],
+                text=[f"{c:.2f}" for c in contrib_df['Contribution']],
+                textposition='auto'
+            ))
+            
+            fig_local.update_layout(
+                title="Applicant-Specific Feature Contributions",
+                xaxis_title="← Pushing toward Approval (Green)  |  Pushing toward High Risk (Red) →",
+                yaxis_title="",
+                template="plotly_white",
+                height=400
+            )
+            
+            st.plotly_chart(fig_local, use_container_width=True)
+            
+        else:
+            st.info("👈 Please enter applicant details in the **Single Applicant** tab first.")
