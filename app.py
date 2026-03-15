@@ -4,8 +4,6 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 from PIL import Image
-from lime import lime_tabular
-import streamlit.components.v1 as components
 
 # --- PAGE CONFIG ---
 st.set_page_config(
@@ -70,8 +68,8 @@ st.markdown("### Decision Support System for Financial Risk Assessment")
 if scaler is None or model is None:
     st.error("⚠️ System Offline: Model files missing.")
 else:
-    # Added the 4th tab for XAI
-    tab1, tab2, tab3, tab4 = st.tabs(["🎯 Single Applicant", "📂 Batch Processing", "📈 Insights & About", "🧠 Explainable AI"])
+    # Reverted back to the original 3 tabs
+    tab1, tab2, tab3 = st.tabs(["🎯 Single Applicant", "📂 Batch Processing", "📈 Insights & About"])
 
     with tab1:
         col_in, col_res = st.columns([1.5, 1])
@@ -129,33 +127,3 @@ else:
         fig = go.Figure(go.Bar(x=weights, y=features, orientation='h', marker_color=['#2ecc71' if w < 0 else '#e74c3c' for w in weights]))
         fig.update_layout(title="Feature Influence on Default Risk", template="plotly_white")
         st.plotly_chart(fig, use_container_width=True)
-
-    with tab4:
-        st.subheader("Model Explainability (XAI)")
-        st.write("Understand the exact drivers behind the model's decision for the applicant currently in the **Single Applicant** tab.")
-        
-        if 'scaled_data' in locals():
-            
-            # --- LIME EXPLANATION ---
-            st.markdown("### LIME (Local Interpretable Model-agnostic Explanations)")
-            st.caption("LIME builds a mini-model around this specific applicant to explain the probability score. It shows which features contributed most to the 'High Risk' or 'Approved' prediction.")
-            
-            # Dummy background using zeros (represents average since data is scaled)
-            dummy_background_lime = np.zeros((100, len(scaler.feature_names_in_)))
-            
-            explainer_lime = lime_tabular.LimeTabularExplainer(
-                training_data=dummy_background_lime,
-                feature_names=scaler.feature_names_in_,
-                class_names=['Approved', 'High Risk'],
-                mode='classification',
-                discretize_continuous=False
-            )
-            
-            predict_fn = lambda x: model.predict_proba(x)
-            exp = explainer_lime.explain_instance(scaled_data[0], predict_fn, num_features=6)
-            
-            # Render LIME as HTML in Streamlit
-            components.html(exp.as_html(), height=350, scrolling=True)
-            
-        else:
-            st.info("👈 Please enter applicant details in the **Single Applicant** tab first to see explanations.")
