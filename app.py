@@ -8,7 +8,7 @@ from PIL import Image
 # --- LOAD PREVIEW IMAGE ---
 try:
     # Load the image to be used as the page icon/preview
-    page_img = Image.open('image_9e91b0.png')
+    page_img = Image.open('loan.png')
 except FileNotFoundError:
     page_img = "🏛️" # Fallback to emoji if the image isn't found
 
