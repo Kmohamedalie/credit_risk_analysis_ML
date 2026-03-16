@@ -5,10 +5,17 @@ import numpy as np
 import plotly.graph_objects as go
 from PIL import Image
 
+# --- LOAD PREVIEW IMAGE ---
+try:
+    # Load the image to be used as the page icon/preview
+    page_img = Image.open('image_9e91b0.png')
+except FileNotFoundError:
+    page_img = "🏛️" # Fallback to emoji if the image isn't found
+
 # --- PAGE CONFIG ---
 st.set_page_config(
     page_title="Ca' Foscari Loan Analytics",
-    page_icon="🏛️",
+    page_icon=page_img,
     layout="wide"
 )
 
