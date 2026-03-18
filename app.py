@@ -18,7 +18,7 @@ st.set_page_config(
 # --- CUSTOM CSS FOR VISIBILITY ---
 st.markdown("""
     <style>
-    .stApp { background-color: #f4f7f6; }
+    .stApp { background-color: #000000; }
     .result-card {
         background-color: #ffffff;
         padding: 25px;
