@@ -22,21 +22,7 @@ st.set_page_config(
 # --- CUSTOM STYLING (The "Professional" Look) ---
 st.markdown("""
     <style>
-    /* Hide the default Streamlit SVG arrow */
-button[data-testid="collapsedControl"] svg,
-button[data-testid="stBaseButton-headerNoPadding"] svg {
-    display: none !important;
-}
-
-/* Insert the universal hamburger icon (☰) */
-button[data-testid="collapsedControl"]::before,
-button[data-testid="stBaseButton-headerNoPadding"]::before {
-    content: "☰";
-    font-size: 24px;
-    font-weight: bold;
-    color: currentColor;
-    
-    .stMetric { padding: 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+.stMetric { padding: 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     div[data-testid="stExpander"] { border: none !important; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     .stTabs [data-baseweb="tab-list"] { gap: 10px; }
     .stTabs [data-baseweb="tab"] {  
