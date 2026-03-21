@@ -19,10 +19,10 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS to swap the sidebar toggle icon
-hamburger_css = """
-<style>
-/* Hide the default Streamlit SVG arrow */
+# --- CUSTOM STYLING (The "Professional" Look) ---
+st.markdown("""
+    <style>
+    /* Hide the default Streamlit SVG arrow */
 button[data-testid="collapsedControl"] svg,
 button[data-testid="stBaseButton-headerNoPadding"] svg {
     display: none !important;
@@ -35,16 +35,7 @@ button[data-testid="stBaseButton-headerNoPadding"]::before {
     font-size: 24px;
     font-weight: bold;
     color: currentColor;
-}
-</style>
-"""
-
-# Inject the CSS into the app
-st.markdown(hamburger_css, unsafe_allow_html=True)
-
-# --- CUSTOM STYLING (The "Professional" Look) ---
-st.markdown("""
-    <style>
+    
     .stMetric { padding: 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     div[data-testid="stExpander"] { border: none !important; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     .stTabs [data-baseweb="tab-list"] { gap: 10px; }
