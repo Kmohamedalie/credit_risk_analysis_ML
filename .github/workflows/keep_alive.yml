@@ -11,4 +11,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Wake up Streamlit
-        run: curl -I https://56-tools.streamlit.app/
+        run: curl -I https://creditriskanalysisml-rm4af.streamlit.app
